@@ -1,0 +1,180 @@
+<!--
+ * @Author: Li Lin
+ * @Date: 2022-08-15 15:15:18
+ * @LastEditors: Li Lin
+ * @LastEditTime: 2022-08-18 14:49:48
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .selectDiv {
+      position: absolute;
+      right: 12px;
+      top: 60px;
+      z-index: 1;
+    }
+
+    select {
+      width: 100px;
+      height: 34px;
+      border-radius: 6px;
+    }
+
+    .myMap {
+      width: 100%;
+      height: 800px;
+    }
+  </style>
+  <title>读取GeoJSON</title>
+</head>
+<body>
+  <div class="container">
+    <h2>读取GeoJSON</h2>
+    <div class="selectDiv">
+      <select name="绘图类型" id="type" onchange="selectType(this.value)">
+        <option value="Point">点</option>
+        <option value="LineString">线</option>
+        <option value="Box">矩形</option>
+        <option value="Polygon">多边形</option>
+        <option value="Circle">圆</option>
+      </select>
+    </div>
+    <div id="myMap" class="myMap"></div>
+  </div>
+</body>
+<script type="text/javascript">
+
+  const map = new ol.Map({
+    target: 'myMap',
+    layers: [
+      new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'http://t{1-7}.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+        })
+      }),
+      // new ol.layer.Tile({
+      //   source: new ol.source.XYZ({
+      //     url: 'http://t{1-7}.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+      //   })
+      // }),
+    ],
+    view: new ol.View({
+      projection: 'EPSG:3857',
+      center: ol.proj.transform([103, 35.5], 'EPSG:4326', 'EPSG:3857'),
+      zoom: 5,
+    }),
+  })
+  
+  let drawIn = null
+  let vectorIn = null
+
+  selectType(document.getElementById('type').value)
+  // 选择器
+  function selectType(value) {
+
+    // 删除上次画的
+    if (drawIn) map.removeInteraction(drawIn)
+
+    // 删除上一个矢量图
+    if (vectorIn) map.removeLayer(vectorIn)
+
+    // 为矢量图层提供特征源
+    const source = new ol.source.Vector()
+
+    // 新建一个矢量图层
+    vectorIn = new ol.layer.Vector({
+      source: source, // 源为矢量源
+
+      // 此处设置的是画完图形后的样式
+      style: new ol.style.Style({
+        // 设置画图的内部颜色 rgba
+        fill: new ol.style.Fill({
+          color: 'rgba(0,0,0,0.1)'
+        }),
+        // 边框
+        stroke: new ol.style.Stroke({
+          color: 'black',
+          lineCpa: 'butt', // 线帽的样式
+          lineJoin: 'bevel', // 两条线的链接角的样式
+          width: 1,
+        }),
+        image: new ol.style.Circle({
+          fill: new ol.style.Fill({
+            color: 'blue'
+          }),
+          radius: 5
+        })
+      }),
+
+    })
+
+    // 如果绘制类型为矩形- 要改成圆形并添加geometryFunction方法
+    if (value === 'Box') {
+      value = 'Circle'
+      // 创建绘画实例
+      drawIn = new ol.interaction.Draw({
+
+        // 绘画的目标源 要和矢量图层源一致（就是往那个图层上画）
+        source: source,
+
+        // 类型
+        type: value,
+
+        // 禁止在绘画时触发单击 右击 双击事件
+        stopClick: true,
+
+        // geometryFunction - 几何坐标更新时调用函数
+        // ol.interaction.Draw.createBox() - 绘制箱形多边形的函数与type: 'Circle'返回一个框而不是圆形几何
+        geometryFunction: new ol.interaction.Draw.createBox()
+      })
+    } else {
+      drawIn = new ol.interaction.Draw({
+        source: source,
+        type: value,
+        stopClick: true,
+        // 这里设置的是 草图的样式
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            width: 5,
+            color: 'red'
+          }),
+          fill: new ol.style.Fill({
+            color: 'green'
+          }),
+          // image就是鼠标上的小图形，如果new Circle 就是小圆点 注意必须设置radius和颜色 不然显示不出来
+          image: new ol.style.Circle({
+            fill: new ol.style.Fill({
+              color: 'red'
+            }),
+            radius: 5
+          })
+        })
+      })
+    }
+
+    // 将绘制完成的内容转成GeoJSON
+    drawIn.on("drawend", (e) => {
+      //ol.format.GeoJSON() - 以GeoJSON格式写入活读取特征 - featureProjection: 将绘制坐标转换为某种格式
+      const featureGeoJSON = JSON.parse(new ol.format.GeoJSON({featureProjection: 'EPSG:3857'}).writeFeature(e.feature))
+      console.log(featureGeoJSON)
+    })
+
+    map.addInteraction(drawIn)
+    map.addLayer(vectorIn)
+  }
+
+</script>
+</html>

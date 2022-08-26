@@ -1,0 +1,104 @@
+<!--
+ * @Author: Li Lin
+ * @Date: 2022-08-15 15:15:18
+ * @LastEditors: Li Lin
+ * @LastEditTime: 2022-08-19 09:06:27
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .myMap {
+      width: 100%;
+      height: 800px;
+    }
+  </style>
+  <title>加载wms服务</title>
+</head>
+<body>
+  <div class="container">
+    <h2>加载wms服务</h2>
+    <button onclick="showBeijing()">北京</button>
+    <button onclick="deleteShow()">取消</button>
+    <div id="myMap" class="myMap"></div>
+  </div>
+</body>
+<script type="text/javascript">
+
+  const map = new ol.Map({
+    target: 'myMap',
+    layers: [
+      new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'http://t{1-7}.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+        })
+      }),
+      new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'http://t{1-7}.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+        })
+      }),
+    ],
+    view: new ol.View({
+      projection: 'EPSG:3857',
+      center: ol.proj.transform([103, 35.5], 'EPSG:4326', 'EPSG:3857'),
+      zoom: 5,
+    }),
+  })
+
+  const geoTile = new ol.layer.Tile({
+
+    // ol.source.TileWMS - 来自 WMS 服务器的切片数据的图层源
+    source: new ol.source.TileWMS({
+      url: 'http://localhost:8080/geoserver/workspace/wms',
+      params: {
+        // geoserver必须设置参数LAYERS 值为 geoserver中的图层名称
+        LAYERS: 'workspace:layer',
+        TILED: true, //是否要将数据制作成切片，省略后返回的是一张完整图
+        
+        // 改变颜色 注意也要在shp文件更改
+        env: 'color:000000'
+      },
+      // 服务类型 因为是geoserver
+      serverType: 'geoserver',
+      transition: 0,
+    })
+  })
+  map.addLayer(geoTile)
+  
+  let wmsLayer
+  const showBeijing = ()=> {
+    // 注册一个服务端渲染图像 图层
+    wmsLayer = new ol.layer.Image({
+
+      // wms服务源单个图像
+      source: new ol.source.ImageWMS({
+        url: 'http://114.116.246.55:7090/geoserver/lsyd/wms',
+        params: {
+          layers: 'lsyd:view_lsyd_dkxx_csba_jgrw',
+          // 使用CQL_FILTER过滤
+          CQL_FILTER: `SXZQDM like '1101' and QDJSRQ >= 2022-08-17`,
+        },
+      }),
+    })
+    map.addLayer(wmsLayer)
+  }
+
+  function deleteShow() {
+    map.removeLayer(wmsLayer)
+  }
+
+</script>
+</html>

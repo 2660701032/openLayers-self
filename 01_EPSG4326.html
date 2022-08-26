@@ -1,0 +1,91 @@
+<!--
+ * @Author: Li Lin
+ * @Date: 2022-08-15 15:15:18
+ * @LastEditors: Li Lin
+ * @LastEditTime: 2022-08-17 10:27:45
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+    }
+
+    .myMap {
+      width: 100%;
+      height: 800px;
+    }
+  </style>
+  <title>EPSG:4326矢量图</title>
+</head>
+<body>
+  <div class="container">
+    <h2>EPSG:4326</h2>
+    <!-- 1. 准备一个ol容器并且设定宽高 -->
+    <div id="myMap" class="myMap"></div>
+  </div>
+</body>
+<script type="text/javascript">
+  // 2. 初始化 - 创建地图实例
+  const map = new ol.Map({
+    // target属性 指定存放ol容器的id
+    target: 'myMap',
+
+    // layers 图层数组可以接受多个图层并按顺序排列
+    layers: [
+
+      // ol/layer/Tile: 图层源
+      new ol.layer.Tile({
+
+        // source: 该图层的来源 ol/source/XYZ: 定义该图层的来源是XYZ格式的url
+        source: new ol.source.XYZ({
+
+          // 必须包含{x},{y}或{-y}, 和{z}占位符，1-7是随机一个地址，tk后加上在天地图申请的key（个人或企业版）
+          url: 'http://t4.tianditu.com/DataServer?T=vec_w&tk=d3604bf2b50e4844e38b7ca6fcce7a38&x={x}&y={y}&l={z}'
+          /*
+            注：T后的投影类型
+
+              vec表示矢量底图  cva表示矢量注记
+              img：图像地图    cia：图像注记
+              ter：地形渲染    cta：地形注记
+              
+            c：表示经纬度投影4326   w：表示球面墨卡托投影3857
+            此处必须一一对应 只在view设置projection: "EPSG:4326"是没有效果的
+          */
+        })
+      }),
+      new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'http://t4.tianditu.com/DataServer?T=cva_w&tk=d3604bf2b50e4844e38b7ca6fcce7a38&x={x}&y={y}&l={z}'
+        })
+      })
+    ],
+    // view：地图的视图  ol/View 表示2D视图-可以更改地图中心、分辨率和旋转
+    view: new ol.View({
+
+      // 默认投影是3857 - 球形墨卡托 坐标数值很大
+      projection: "EPSG:4326", // 4326相当于GPS坐标范围在[-180 - 180, -90 - 90]之间
+
+      // 设置中心点
+      center: [109, 35.5],
+
+      // 设置分辨率未定义时 地图初始缩放级别
+      zoom: 5,
+
+      // 最大缩放级别 默认28
+      maxZoom: 28,
+
+      // 最小缩放级别 默认0
+      minZoom: 0,
+    }),
+  })
+</script>
+</html>

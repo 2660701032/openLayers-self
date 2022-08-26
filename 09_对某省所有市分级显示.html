@@ -1,0 +1,145 @@
+<!--
+ * @Author: Li Lin
+ * @Date: 2022-08-15 15:15:18
+ * @LastEditors: Li Lin
+ * @LastEditTime: 2022-08-26 09:07:39
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+  <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .myMap {
+      width: 100%;
+      height: 800px;
+    }
+  </style>
+  <title>分级显示</title>
+</head>
+<body>
+  <div class="container">
+    <h2>分级显示</h2>
+    <div id="myMap" class="myMap"></div>
+  </div>
+</body>
+<script type="text/javascript">
+
+const COLORS = [
+  '#f8f4b8',
+  '#f3e68a',
+  '#f3dc84',
+  '#eec875',
+  '#eab459',
+  '#e79a4e',
+  '#da922d',
+  '#d7642a',
+  '#cd4a2b',
+  '#c55644',
+]
+
+const STYLE_LIST = COLORS.map(item => {
+  return new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      color: '#cff',
+      width: 1,
+    }),
+    fill: new ol.style.Fill({
+      color: item
+    })
+  })
+})
+
+  // 获取河北省所有市的数据
+  let regionAll = []
+  let features = null
+  const geoJSON = new ol.format.GeoJSON({
+    dataProjection: 'EPSG:4326',
+    featureProjection: 'EPSG:3857',
+  })
+  console.log(geoJSON);
+  
+  $.get('http://www.sasclouds.com/api/region/v1/region/pid/130000/l', (res, status) => {
+    const { data } = res
+    regionAll = data
+    features = regionAll.map(({
+      regionId,
+      regionName,
+      boundary,
+      extent
+    }) => {
+      const feature = geoJSON.readFeature(boundary)
+      const porperties = {
+        data: Math.ceil(Math.random() * 10),
+        regionName,
+        regionId,
+        extent,
+      }
+      feature.setProperties(porperties)
+      return feature
+    })
+    console.log(features, 'features')
+    const regionLay = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features,
+      }),
+      style: (feature) => {
+        const { data } = feature.getProperties()
+        return STYLE_LIST[data - 1]
+      }
+    })
+    map.addLayer(regionLay)
+  })
+  
+  // const regionVetor = map.addVectorlayer({
+  //   index: 3,
+  //   visible: true,
+  //   style: (feature) => {
+  //     const porperties = feature.getProperties()
+  //     const level = GET_LEVEL(porperties.filterData, this.filterDataItem)
+  //     return level === null ? STYLE_LIST_DEFAULT : STYLE_LIST[level]
+  //   },
+  // })
+  // 矢量瓦片层
+  const layersVec = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'http://t{1-7}.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+    }),
+    // 先设置上zIndex层级
+    zIndex: 0,
+  })
+  const layersCva = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'http://t{1-7}.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+    }),
+    zIndex: 1,
+  })
+
+  const map = new ol.Map({
+    target: 'myMap',
+    layers: [
+      layersVec,
+      layersCva,
+    ],
+    view: new ol.View({
+      projection: 'EPSG:3857',
+      center: ol.proj.transform([103, 35.5], 'EPSG:4326', 'EPSG:3857'),
+      zoom: 5,
+    }),
+  })
+
+ 
+  
+</script>
+</html>

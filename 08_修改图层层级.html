@@ -1,0 +1,102 @@
+<!--
+ * @Author: Li Lin
+ * @Date: 2022-08-15 15:15:18
+ * @LastEditors: Li Lin
+ * @LastEditTime: 2022-08-23 08:54:15
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .myMap {
+      width: 100%;
+      height: 800px;
+    }
+  </style>
+  <title>修改图层层级</title>
+</head>
+<body>
+  <div class="container">
+    <h2>修改图层层级</h2>
+    <button onclick="showBeijing()">增加层级</button>
+    <button onclick="deleteShow()">减小层级</button>
+    <div id="myMap" class="myMap"></div>
+  </div>
+</body>
+<script type="text/javascript">
+
+  // 矢量瓦片层
+  const layersVec = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'http://t{1-7}.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+    }),
+    // 先设置上zIndex层级
+    zIndex: 0,
+  })
+  const layersCva = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'http://t{1-7}.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+    }),
+    zIndex: 1,
+  })
+
+  const layersImg = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'http://t{1-7}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+    }),
+    zIndex: 2,
+  })
+  const layersCia = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'http://t{1-7}.tianditu.com/DataServer?T=cia_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+    }),
+    zIndex: 3,
+  })
+
+
+  const map = new ol.Map({
+    target: 'myMap',
+    layers: [
+      layersVec,
+      layersCva,
+      layersImg,
+      layersCia,
+    ],
+    view: new ol.View({
+      projection: 'EPSG:3857',
+      center: ol.proj.transform([103, 35.5], 'EPSG:4326', 'EPSG:3857'),
+      zoom: 5,
+    }),
+  })
+
+  
+  
+  const showBeijing = ()=> {
+    // 获取该地图实力的所有图层
+    // const layers = map.getAllLayers()
+
+    // 设置该图层的层级
+    layersVec.setZIndex(10)
+
+    // 实例的setLayers方法 会先清空所有的图层然后再设置
+    // map.setLayers([layersVec, layersCva])
+  }
+
+  function deleteShow() {
+    layersVec.setZIndex(0)
+  }
+
+</script>
+</html>

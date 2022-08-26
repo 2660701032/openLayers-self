@@ -1,0 +1,79 @@
+<!--
+ * @Author: Li Lin
+ * @Date: 2022-08-15 15:15:18
+ * @LastEditors: Li Lin
+ * @LastEditTime: 2022-08-15 17:42:07
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+    }
+
+    .myMap {
+      width: 100%;
+      height: 800px;
+    }
+  </style>
+  <title>EPSG:3857影像图</title>
+</head>
+<body>
+  <div class="container">
+    <h2>EPSG:3857</h2>
+    <!-- 1. 准备一个ol容器并且设定宽高 -->
+    <div id="myMap" class="myMap"></div>
+  </div>
+</body>
+<script type="text/javascript">
+  // 2. 初始化 - 创建地图实例
+  const map = new ol.Map({
+
+    // target属性 指定存放ol容器的id
+    target: 'myMap',
+
+    // layers 图层数组可以接受多个图层并按顺序排列
+    layers: [
+
+      // ol/layer/Tile: 图层源
+      new ol.layer.Tile({
+
+        // source: 该图层的来源 ol/source/XYZ: 定义该图层的来源是XYZ格式的url
+        source: new ol.source.XYZ({
+
+          // 必须包含{x},{y}或{-y}, 和{z}占位符，1-7是随机一个地址，tk后加上在天地图申请的key（个人或企业版）
+          url: 'http://t{1-7}.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+          /*
+            注：T后的投影类型
+
+              vec表示矢量底图  cva表示矢量注记
+              img：图像地图    cia：图像注记
+              ter：地形渲染    cta：地形注记
+              
+            c：表示经纬度投影   w：表示球面墨卡托投影
+            此处必须一一对应 只在view设置projection: "EPSG:4326"是没有效果的
+          */
+        })
+      }),
+      new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'http://t{1-7}.tianditu.com/DataServer?T=cia_w&x={x}&y={y}&l={z}&tk=d3604bf2b50e4844e38b7ca6fcce7a38'
+        })
+      })
+    ],
+    view: new ol.View({
+      projection: 'EPSG:3857',
+      center: [11500000, 14000000],
+      zoom: 5,
+    }),
+  })
+</script>
+</html>
